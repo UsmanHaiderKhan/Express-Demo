@@ -1,5 +1,4 @@
 const Joi = require("joi");
-
 const express = require("express");
 const app = express();
 app.use(express.json());
@@ -37,18 +36,20 @@ app.get("/api/courses", (req, res) => {
 	res.send(JSON.stringify(courses));
 });
 
+
 //Get Data from Array By Id
+
 app.get("/api/courses/:id", (req, res) => {
 	const course = courses.find(c => c.id === parseInt(req.params.id));
-	if (!course) res.status(404).send("No Course Available Across that Id");
+	if (!course) return res.status(404).send("No Course Available Across that Id");
 	res.send(course);
 });
 
 //HTTP_Post Request
 app.post("/api/courses", (req, res) => {
-	if (result.error) {
-		res.status(400).send(result.error.details[0].message);
-		return;
+	const { error } = validateCourse(req.body);
+	if (error) {
+		return res.status(400).send(error.details[0].message);
 	}
 	//Custom Code to check input validation
 	// if (!req.body.name || req.body.name.length < 3) {
@@ -66,28 +67,46 @@ app.post("/api/courses", (req, res) => {
 // HTTP_Put Request
 
 app.put("/api/courses/:id", (req, res) => {
-	const course = course.find(c => c.id === parseInt(req.params.id));
+	const course = courses.find(c => c.id === parseInt(req.params.id));
 	if (!course) {
-		res.status(404).send("Course Not Found Across That Id");
+		return res.status(404).send("Course Not Found Across That Id");
 	}
 
-	var { error } = validateCourse(req.body);
+	const { error } = validateCourse(req.body);
 	if (error) {
+		return res.status(400).send(error.details[0].message);
 	}
-	// var updated=
+	// Update Course Name
+	course.name = req.body.name;
+	res.send(course);
+});
+//Http_Delete Request
+
+app.delete("/api/courses/:id", (req, res) => {
+	var course = courses.find(c => c.id === parseInt(req.params.id));
+	if (!course) {
+		return res.status(404).send("No course Across that Id...");
+	}
+	//Delete course
+	const index = courses.indexOf(course);
+	courses.splice(index, 1);
+	res.send(course);
 });
 
 //Make Validation Function
-function validateCourse(course) {
+
+module.exports = function validateCourse(course) {
 	const Schema = {
 		name: Joi.string()
 			.min(3)
 			.required()
 	};
 	return Joi.validate(course, Schema);
-}
+};
 
 //When We Deploy the Application Port No Changes For
 //That we Need To Set Up Port no Dynamically For that
-var port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server Listening on PORT ${port}...`));
+module.exports = function serverPort() {
+	var port = process.env.PORT || 3000;
+	app.listen(port, () => console.log(`Server Listening on PORT ${port}...`));
+};
