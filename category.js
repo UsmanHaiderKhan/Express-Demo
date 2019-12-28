@@ -28,6 +28,7 @@ var categories = [
 app.get("/api/category", (req, res) => {
 	res.send(categories);
 });
+
 // Get Data by Id
 app.get("/api/category/:id", (req, res) => {
 	const category = categories.find(c => c.id === parseInt(req.params.id));
@@ -36,6 +37,7 @@ app.get("/api/category/:id", (req, res) => {
 	}
 	res.send(category);
 });
+
 //HTTP_POST Request
 app.post("/api/category", (req, res) => {
 	const { error } = ValidateCategory(req.body);
@@ -79,15 +81,15 @@ app.delete("/api/category/:id", (req, res) => {
 	res.send(category);
 });
 
+// common Function
 function ValidateCategory(category) {
 	var Schema = {
 		name: Joi.string()
 			.min(5)
 			.required()
 	};
-
 	return Joi.validate(category, Schema);
 }
-
+//
 var port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Server Listen On PORT ${port}...`));
