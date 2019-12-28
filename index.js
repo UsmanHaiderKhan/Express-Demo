@@ -1,7 +1,35 @@
 const Joi = require("joi");
+const config = require("config");
+const morgan = require("morgan");
+const helmet = require("helmet");
+const auth = require("./auth");
+const logger = require("./logger");
 const express = require("express");
 const app = express();
+//Built-In Middle Ware
 app.use(express.json());
+
+app.use(express.urlencoded({ extended: true }));
+
+//Here we Keep static resources of Our Site Like Css/Images extra
+app.use(express.static("public"));
+
+app.use(morgan("tiny"));
+console.log(`Environment:${app.get("env")}`);
+if (app.get("env") === "development") {
+	console.log("Morgen is Enabled...");
+}
+app.use(helmet());
+
+console.log("Application Mode = " + config.get("name"));
+console.log("Mail Server = " + config.get("mail.host"));
+console.log("Mail Password = " + config.get("mail.password"));
+
+//Custom Middle Ware
+app.use(logger);
+
+app.use(auth);
+
 var courses = [
 	{
 		id: 1,
@@ -36,9 +64,7 @@ app.get("/api/courses", (req, res) => {
 	res.send(JSON.stringify(courses));
 });
 
-
 //Get Data from Array By Id
-
 app.get("/api/courses/:id", (req, res) => {
 	const course = courses.find(c => c.id === parseInt(req.params.id));
 	if (!course) return res.status(404).send("No Course Available Across that Id");
@@ -65,7 +91,6 @@ app.post("/api/courses", (req, res) => {
 });
 
 // HTTP_Put Request
-
 app.put("/api/courses/:id", (req, res) => {
 	const course = courses.find(c => c.id === parseInt(req.params.id));
 	if (!course) {
@@ -80,8 +105,8 @@ app.put("/api/courses/:id", (req, res) => {
 	course.name = req.body.name;
 	res.send(course);
 });
-//Http_Delete Request
 
+//Http_Delete Request
 app.delete("/api/courses/:id", (req, res) => {
 	var course = courses.find(c => c.id === parseInt(req.params.id));
 	if (!course) {
@@ -94,19 +119,17 @@ app.delete("/api/courses/:id", (req, res) => {
 });
 
 //Make Validation Function
-
-module.exports = function validateCourse(course) {
+function validateCourse(course) {
 	const Schema = {
 		name: Joi.string()
 			.min(3)
 			.required()
 	};
 	return Joi.validate(course, Schema);
-};
+}
 
 //When We Deploy the Application Port No Changes For
 //That we Need To Set Up Port no Dynamically For that
-module.exports = function serverPort() {
-	var port = process.env.PORT || 3000;
-	app.listen(port, () => console.log(`Server Listening on PORT ${port}...`));
-};
+
+var port = process.env.PORT || 3000;
+app.listen(port, () => console.log(`Server Listening on PORT ${port}...`));
